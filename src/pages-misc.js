@@ -26,7 +26,7 @@ export function startPage() {
   const week = today >= T.weekBefore && today <= T.end;
   const open = [...content.guides.todo, ...state.custom.map((c) => ({ id: c.id, t: [c.t, c.t] }))].filter((t) => !state.todos[t.id]?.done);
   const hero = inTrip ? `<a class="hero-btn" href="#/today">${icon('clock', 20)} ${tr('Open today', '開啟今天')}</a>` : until > 0 ? `<div class="count"><b>${until}</b><span>${tr('days to go', '日後出發')}</span></div>` : '';
-  const html = `<section class="start"><header class="hero"><div class="eyebrow">${dateShort(T.start)} – ${dateShort(T.end)} · Oslo · Tromsø · Lofoten</div><h1>${esc(L(T.title))}</h1>${hero}</header>
+  const html = `<section class="start"><header class="hero"><h1>${esc(L(T.title))}</h1><p class="lead">${dateShort(T.start)} – ${dateShort(T.end)} · Oslo · Tromsø · Lofoten</p>${hero}</header>
     ${tip('welcome', tr('Welcome', '歡迎'), tr('This is your shared plan. Tap a day to see its map. Tap <b>Today</b> during the trip. Everything works offline once opened.', '這是你們的共用行程。點選一天可看地圖。旅程中點<b>今天</b>。開啟過一次後可離線使用。'))}
     <div class="card"><h2>${week ? tr('Week-before checklist', '出發前一週清單') : tr('The trip in 60 seconds', '60 秒看完行程')}</h2>
       ${week ? `<ul class="check">${[['Confirm bookings and the fox visit', '確認預訂及北極狐體驗'], ['Download offline maps', '下載離線地圖'], ['Install the apps and add a payment card', '安裝應用程式並登記付款卡'], ['Pack: open the Packing list', '收拾行李：打開行李清單'], ['Check the forecast on Yr', '在 Yr 查看天氣預報'], ['Charge power banks and phones', '為行動電源與手機充電']].map(([a, b]) => `<li>${icon('check', 16)} ${tr(a, b)}</li>`).join('')}</ul>`
@@ -44,14 +44,14 @@ export function todayPage() {
   const day = days().find((d) => d.date === now.iso);
   if (!day) {
     const before = now.iso < T.start;
-    return page(`<section><h1 class="pt">${tr('Today', '今天')}</h1><div class="card"><p>${before ? tr('The trip has not started. Here is Day 0.', '旅程尚未開始。以下是第 0 天。') : tr('The trip is over. Welcome home.', '旅程已結束，歡迎回家。')}</p>${before ? `<a class="btn" href="#/day/d0">${tr('Open Day 0', '開啟第 0 天')}</a>` : ''}</div></section>`);
+    const until = daysBetween(now.iso, T.start); const d0 = days()[0]; return page(`<section><h1 class="pt">${tr('Today', '今天')}</h1><div class="card"><h2>${before ? tr(`${until} days until the trip`, `距離出發還有 ${until} 日`) : tr('The trip is over. Welcome home.', '旅程已結束，歡迎回家。')}</h2>${before ? `<p>${tr('This page follows the trip day by day once it starts. Until then, here is the first day.', '旅程開始後，這頁會逐日跟進。現在先看第一天。')}</p><ul class="check">${d0.sum.map((l) => `<li>${icon('check', 16)} ${esc(L(l))}</li>`).join('')}</ul><a class="btn" href="#/day/d0">${tr('Open the first day', '開啟第一天')}</a>` : ''}</div></section>`);
   }
   const calc = computeDay(day, planOf(day.id), content);
   const nowMin = now.min; const rows = calc.rows;
   const nextI = rows.findIndex((r) => r.arrive > nowMin); const cur = rows.filter((r) => r.arrive <= nowMin && r.depart >= nowMin)[0];
-  const card = (r, label) => { const s = content.spots[r.id]; return `<div class="card nn"><div class="eyebrow">${label}</div><h2>${fmt(r.arrive)} · ${esc(spotName(s))}</h2><div class="rmeta">${typeChips(s.t)}</div><p>${esc(spotNote(s))}</p>
+  const card = (r, label) => { const s = content.spots[r.id]; return `<div class="card nn"><h2><span class="pill g">${label}</span> ${fmt(r.arrive)} · ${esc(spotName(s))}</h2><div class="rmeta">${typeChips(s.t)}</div><p>${esc(spotNote(s))}</p>
     <div class="acts">${s.c ? `<a class="btn" href="${gmaps(s)}" target="_blank" rel="noopener">${icon('map', 16)} Google</a><a class="btn" href="${amaps(s, spotName(s))}" target="_blank" rel="noopener">${icon('map', 16)} Apple</a>` : ''}<button class="btn" data-done="${r.id}">${icon('check', 16)} ${person(me.id || 'guest').stops?.[r.id] ? tr('Done', '已完成') : tr('Mark done', '標記完成')}</button></div></div>`; };
-  const html = `<section><div class="eyebrow">${dateLong(day.date)}</div><h1 class="pt">${esc(dayTitle(day))}</h1>
+  const html = `<section><h1 class="pt">${esc(dayTitle(day))}</h1><p class="lead">${dateLong(day.date)}</p>
     ${cur ? card(cur, tr('Now', '現在')) : ''}${nextI >= 0 ? card(rows[nextI], tr('Next', '下一站')) : `<div class="card"><p>${tr('Nothing more is planned today.', '今天沒有更多行程。')}</p></div>`}
     ${day.aurora ? `<div class="card aur"><h2>${icon('aurora', 20)} ${tr('Aurora check at 17:00', '17:00 極光檢查')}</h2><p>${tr('Look at cloud cover. Go only if a gap is coming.', '查看雲量，預計有空隙才出發。')} <a href="https://www.yr.no/en" target="_blank" rel="noopener">Yr ${icon('ext', 13)}</a></p></div>` : ''}
     <div class="card readfirst"><h2>${tr('Read this first', '先讀這個')}</h2><ul>${[driveLine(day, calc), ...day.sum.slice(1).map(L)].map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
@@ -65,17 +65,17 @@ export function spotsPage() {
   const html = `<section><h1 class="pt">${tr('Spots and swaps', '景點與更換')}</h1>
     ${tip('spots', tr('Add a spot to any day', '把景點加入任何一天'), tr('Pick a day under a spot and tap <b>Add</b>. It moves out of the day it was in. You can also drag on each day page.', '在景點下方選一天，點<b>加入</b>。它會由原本的那天移走。也可以在每日頁面拖放。'))}
     <div class="card"><h2>${tr('What the icons mean', '圖示說明')}</h2>${legend()}</div>
-    ${areas.map((a) => `<h2 class="sec cap">${esc(a)}</h2><ul class="list">${list.filter((s) => s.area === a).map((s) => `<li class="row opt" data-id="${s.id}"><div class="rbody"><h4>${esc(spotName(s))}</h4><div class="rmeta">${typeChips(s.t, 6)}<span class="pill">${icon('clock', 13)} ${tr('Suggested', '建議')} ${dur(s.d || 15)}</span><span class="pill">${s.l === 'day' ? icon('sun', 13) : icon('moon', 13)} ${s.l === 'day' ? tr('Daylight', '日光') : s.l === 'night' ? tr('After dark', '天黑後') : tr('Any time', '任何時間')}</span></div><p>${esc(spotNote(s))}</p>
+    ${areas.map((a) => `<h2 class="sec cap">${esc(a)}</h2><ul class="list">${list.filter((s) => s.area === a).map((s) => `<li class="row opt" data-id="${s.id}"><div class="rbody"><p class="rt">${esc(spotName(s))}</p><div class="rmeta">${typeChips(s.t, 6)}<span class="pill">${icon('clock', 13)} ${tr('Suggested', '建議')} ${dur(s.d || 15)}</span><span class="pill">${s.l === 'day' ? icon('sun', 13) : icon('moon', 13)} ${s.l === 'day' ? tr('Daylight', '日光') : s.l === 'night' ? tr('After dark', '天黑後') : tr('Any time', '任何時間')}</span></div><p>${esc(spotNote(s))}</p>
       <div class="acts"><select data-day="${s.id}" aria-label="${tr('Day', '日子')}">${days().filter((d) => !d.info).map((d) => `<option value="${d.id}">${dayNum(d.date)} ${monShort(d.date)}</option>`).join('')}</select><button class="btn sm" data-addto="${s.id}">${icon('plus', 15)} ${tr('Add', '加入')}</button></div></div></li>`).join('')}</ul>`).join('')}</section>`;
   return page(html, (root) => { bindTips(root); root.addEventListener('click', (e) => { const b = e.target.closest('[data-addto]'); if (!b) return; const id = b.dataset.addto; const dayId = root.querySelector(`[data-day="${id}"]`).value;
-    days().forEach((d) => { if (d.id !== dayId && planOf(d.id).includes(id)) setPlan(d.id, planOf(d.id).filter((x) => x !== id), 'move'); }); if (!planOf(dayId).includes(id)) setPlan(dayId, [...planOf(dayId), id]); b.textContent = '✓'; }); return {}; });
+    days().forEach((d) => { if (d.id !== dayId && planOf(d.id).includes(id)) setPlan(d.id, planOf(d.id).filter((x) => x !== id), 'move'); }); if (!planOf(dayId).includes(id)) setPlan(dayId, [...planOf(dayId), id]); b.innerHTML = icon('check', 16); }); return {}; });
 }
 
 export function todoPage() {
   const items = [...content.guides.todo, ...state.custom.map((c) => ({ id: c.id, t: [c.t, c.t], d: ['', ''] }))];
   const html = `<section><h1 class="pt">${tr('To-do', '待辦事項')}</h1>
     ${tip('todo', tr('Tick things off together', '一起打勾'), tr('Ticks are shared with everyone. Assign an item to a person with the menu.', '打勾會與所有人同步。可用選單指派給某人。'))}
-    <ul class="list todo">${items.map((t) => { const st = state.todos[t.id] || {}; return `<li class="row ${st.done ? 'done' : ''}"><button class="tick ${st.done ? 'on' : ''}" data-todo="${t.id}" aria-label="${tr('Toggle', '切換')}">${st.done ? icon('check', 18) : ''}</button><div class="rbody"><h4>${esc(L(t.t))} ${t.must ? `<span class="pill r">${tr('Must book', '必須預約')}</span>` : ''}</h4>${t.d?.[0] ? `<p>${esc(L(t.d))}</p>` : ''}
+    <ul class="list todo">${items.map((t) => { const st = state.todos[t.id] || {}; return `<li class="row ${st.done ? 'done' : ''}"><button class="tick ${st.done ? 'on' : ''}" data-todo="${t.id}" aria-label="${tr('Toggle', '切換')}">${st.done ? icon('check', 18) : ''}</button><div class="rbody"><p class="rt">${esc(L(t.t))} ${t.must ? `<span class="pill r">${tr('Must book', '必須預約')}</span>` : ''}</p>${t.d?.[0] ? `<p>${esc(L(t.d))}</p>` : ''}
       <div class="acts">${t.due ? `<span class="pill">${icon('clock', 13)} ${tr('Due', '到期')} ${dateShort(t.due)}</span>` : ''}${t.link ? `<a class="btn sm" href="${esc(t.link)}" target="_blank" rel="noopener">${icon('ext', 14)} ${tr('Open', '開啟')}</a>` : ''}
       <select data-owner="${t.id}" aria-label="${tr('Owner', '負責人')}"><option value="">${tr('Anyone', '任何人')}</option>${people().map((p) => `<option value="${p.id}" ${(st.owner ?? t.owner) === p.id ? 'selected' : ''}>${esc(L(p.name))}</option>`).join('')}</select></div></div></li>`; }).join('')}</ul>
     <form id="addtodo" class="addrow"><input id="todotext" placeholder="${tr('Add something to do', '新增待辦事項')}" aria-label="${tr('New to-do', '新待辦')}"><button class="btn">${icon('plus', 16)} ${tr('Add', '新增')}</button></form></section>`;
@@ -95,8 +95,8 @@ export function packPage() {
     ${tip('pack', tr('Your own list', '你自己的清單'), tr('Ticks are saved under the name you pick. Group items show who has claimed them.', '打勾會記在你選擇的名下。共用物品會顯示誰已認領。'))}
     <div class="acts"><select id="who" aria-label="${tr('Whose list', '誰的清單')}">${people().map((p) => `<option value="${p.id}" ${p.id === pid ? 'selected' : ''}>${esc(L(p.name))}</option>`).join('')}</select><span class="pill">${done}/${mine.length}</span></div>
     ${G.packGroups.map(([g, en, zh]) => { const its = G.packing.filter((i) => i.g === g && (i.who !== 'cal' || pid === 'cal')); if (!its.length) return ''; return `<h2 class="sec">${tr(en, zh)}</h2><ul class="list">${its.map((i) => {
-      const claimed = state.claims[i.id]; return i.who === 'group' ? `<li class="row"><div class="rbody"><h4>${esc(L(i.t))}</h4>${i.n[0] ? `<p>${esc(L(i.n))}</p>` : ''}</div><button class="btn sm ${claimed ? 'on' : ''}" data-claim="${i.id}">${claimed ? esc(pname(claimed)) : tr("I'll bring it", '我來帶')}</button></li>`
-      : `<li class="row ${ticks[i.id] ? 'done' : ''}"><button class="tick ${ticks[i.id] ? 'on' : ''}" data-pack="${i.id}" aria-label="${tr('Toggle', '切換')}">${ticks[i.id] ? icon('check', 18) : ''}</button><div class="rbody"><h4>${esc(L(i.t))}</h4>${i.n[0] ? `<p>${esc(L(i.n))}</p>` : ''}</div></li>`; }).join('')}</ul>`; }).join('')}
+      const claimed = state.claims[i.id]; return i.who === 'group' ? `<li class="row"><div class="rbody"><p class="rt">${esc(L(i.t))}</p>${i.n[0] ? `<p>${esc(L(i.n))}</p>` : ''}</div><button class="btn sm ${claimed ? 'on' : ''}" data-claim="${i.id}">${claimed ? esc(pname(claimed)) : tr("I'll bring it", '我來帶')}</button></li>`
+      : `<li class="row ${ticks[i.id] ? 'done' : ''}"><button class="tick ${ticks[i.id] ? 'on' : ''}" data-pack="${i.id}" aria-label="${tr('Toggle', '切換')}">${ticks[i.id] ? icon('check', 18) : ''}</button><div class="rbody"><p class="rt">${esc(L(i.t))}</p>${i.n[0] ? `<p>${esc(L(i.n))}</p>` : ''}</div></li>`; }).join('')}</ul>`; }).join('')}
     <h2 class="sec">${tr('Where this advice comes from', '建議來源')}</h2>${linkList(G.packSources)}</section>`;
   return page(html, (root) => { bindTips(root);
     root.querySelector('#who').addEventListener('change', (e) => { window.__packWho = e.target.value; import('./main.js').then((m) => m.rerender()); });
@@ -126,7 +126,7 @@ export function knowPage() {
 export function appsPage() {
   const G = content.guides; const kinds = Object.keys(G.appKinds);
   return page(`<section><h1 class="pt">${tr('Apps', '應用程式')}</h1><p class="lead">${tr('Install these before you fly and register a payment card where needed.', '起飛前安裝，並在需要時登記付款卡。')}</p>
-    ${kinds.map((k) => `<h2 class="sec">${esc(L(G.appKinds[k]))}</h2><ul class="list">${G.apps.filter((a) => a.k === k).map((a) => `<li class="row"><div class="rbody"><h4>${esc(a.n)}</h4><p>${esc(L(a.t))}</p></div></li>`).join('')}</ul>`).join('')}
+    ${kinds.map((k) => `<h2 class="sec">${esc(L(G.appKinds[k]))}</h2><ul class="list">${G.apps.filter((a) => a.k === k).map((a) => `<li class="row"><div class="rbody"><p class="rt">${esc(a.n)}</p><p>${esc(L(a.t))}</p></div></li>`).join('')}</ul>`).join('')}
     <h2 class="sec">${tr('Sources', '來源')}</h2>${linkList(G.appSources)}</section>`);
 }
 

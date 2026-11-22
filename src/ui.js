@@ -1,6 +1,6 @@
 // Small shared UI helpers.
 import { icon, TYPES, typeIcons } from './icons.js';
-import { L, tr } from './i18n.js';
+import { L, tr, stripCjk } from './i18n.js';
 
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const typeChips = (types, max = 4) => typeIcons(types, max).map((t) => `<span class="tchip" title="${esc(L(TYPES[t].l))}" style="--c:${TYPES[t].c}">${icon(t, 15)}</span>`).join('');
@@ -23,6 +23,8 @@ export function toast(msg, action) {
   el.querySelector('.toast-act')?.addEventListener('click', () => { clearTimeout(toastTimer); el.innerHTML = ''; action.fn(); });
   toastTimer = setTimeout(() => { el.innerHTML = ''; }, action ? 5000 : 2200);
 }
+
+export const photoLink = (s) => `<a class="btn sm" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(stripCjk(s.n[0]) + ' Norway winter')}" target="_blank" rel="noopener">${icon('eye', 15)} ${tr('See photos', '看相片')}</a>`;
 
 export const legend = () => `<div class="legend">${Object.entries(TYPES).map(([k, v]) => `<span class="lg"><span class="tchip" style="--c:${v.c}">${icon(k, 15)}</span>${esc(L(v.l))}</span>`).join('')}</div>`;
 export const linkList = (arr) => `<ul class="srcs">${arr.map(([t, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ${icon('ext', 13)}</a></li>`).join('')}</ul>`;

@@ -13,6 +13,7 @@ const CJK_BRACKET = /\s*[（(][^）)]*[一-鿿][^）)]*[）)]/g;
 export const stripCjk = (s) => (s || '').replace(CJK_BRACKET, '');
 export const spotName = (s) => {
   const [en, zh] = s.n;
+  if (s.stay && lang === 'zh') return '住宿：' + en.replace(/^Stay: /, '').replace(/ area/, ' 一帶');
   if (lang !== 'zh') return stripCjk(en);
   if (CJK_BRACKET.test(en)) { CJK_BRACKET.lastIndex = 0; return en; }
   CJK_BRACKET.lastIndex = 0;

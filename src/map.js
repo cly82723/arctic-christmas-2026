@@ -9,7 +9,8 @@ const TILE = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 export class DayMap {
   constructor(el, hooks) {
     this.hooks = hooks; this.pins = new Map(); this.hl = null;
-    this.map = L.map(el, { zoomControl: false, attributionControl: true, tap: true, scrollWheelZoom: false });
+    // Starts locked so a thumb swipe scrolls the page; the Tap-to-move button unlocks panning and pinch zoom.
+    this.map = L.map(el, { zoomControl: false, attributionControl: true, tap: true, scrollWheelZoom: false, dragging: false, touchZoom: false, doubleClickZoom: false });
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
     L.tileLayer(TILE, { maxZoom: 17, attribution: '© OpenStreetMap', crossOrigin: true }).addTo(this.map);
     this.lines = L.layerGroup().addTo(this.map);
@@ -64,6 +65,7 @@ export class DayMap {
     else L.polyline([A, B], { color, weight: 3, opacity: 0.7, dashArray: '4 8' }).addTo(this.lines);
   }
 
+  setInteractive(on) { for (const h of ['dragging', 'touchZoom', 'doubleClickZoom']) this.map[h][on ? 'enable' : 'disable'](); }
   fit() { const pts = []; this.pins.forEach((m, k) => { if (k.includes(':')) pts.push(m.getLatLng()); }); if (pts.length) this.map.fitBounds(L.latLngBounds(pts).pad(0.18), { maxZoom: 11 }); }
 
   // Light up a pin (hover, tap or press-and-hold on a list item) and show its name.

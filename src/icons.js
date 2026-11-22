@@ -9,7 +9,7 @@ const P = {
   park: '<rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M10 17V8h3.2a2.5 2.5 0 0 1 0 5H10"/>',
   drone: '<path d="M7.5 7.5l9 9M16.5 7.5l-9 9"/><circle cx="5.5" cy="5.5" r="2.5"/><circle cx="18.5" cy="5.5" r="2.5"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/><circle cx="12" cy="12" r="1.4"/>',
   nodrone: '<path d="M7.5 7.5l9 9M16.5 7.5l-9 9"/><circle cx="5.5" cy="5.5" r="2.5"/><circle cx="18.5" cy="5.5" r="2.5"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/><path d="M3 3l18 18"/>',
-  wc: '<rect x="3" y="5" width="18" height="14" rx="3.5"/><text x="12" y="15.4" text-anchor="middle" font-size="8.5" font-weight="700" fill="currentColor" stroke="none" font-family="system-ui,sans-serif">WC</text>',
+  wc: '<circle cx="7.5" cy="4.5" r="1.6"/><circle cx="16.5" cy="4.5" r="1.6"/><path d="M5 9h5l-.8 6H8.6V21H6.4v-6H5.8zM14 9h5l-1.6 6h-.8v6h-2.2v-6h-.4z"/>',
   aurora: '<path d="M3 14c3-7 6-7 9 0s6 7 9 0M3 19.5c3-5 6-5 9 0s6 5 9 0"/><path d="M12 3v3M6 5l1.5 2.3M18 5l-1.5 2.3"/>',
   walk: '<circle cx="13.5" cy="4.5" r="1.8"/><path d="M9.5 21l1.8-6.5 3.2 2.5V21M11.3 14.5 10.5 9l3.5-1 2 3.5 3 1M8 12l2.5-3.5"/>',
   culture: '<path d="M3 10 12 4l9 6M5 10v9M9.5 10v9M14.5 10v9M19 10v9M3 20h18"/>',
