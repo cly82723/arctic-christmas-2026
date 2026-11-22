@@ -1,0 +1,21 @@
+{
+  "name": "arctic-christmas-2026",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Private group itinerary app for Arctic Christmas 2026. App code only; trip content lives in Firestore.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/dev.mjs",
+    "routes": "node scripts/routes.mjs",
+    "seed": "node scripts/seed.mjs"
+  },
+  "dependencies": {
+    "firebase": "^11.0.0",
+    "leaflet": "^1.9.4",
+    "sortablejs": "^1.15.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

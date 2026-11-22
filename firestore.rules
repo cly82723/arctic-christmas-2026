@@ -1,0 +1,10 @@
+rules_version = '2';
+// The long secret trip code in the path is the key. Anyone who has the invite link can read and write that trip.
+// There is no rule for listing the trips collection, so codes cannot be discovered. Everything else is denied.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /trips/{code}/{document=**} {
+      allow read, write: if code.size() >= 24;
+    }
+  }
+}

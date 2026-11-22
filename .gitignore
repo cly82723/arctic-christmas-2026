@@ -1,0 +1,17 @@
+node_modules
+# Private trip content (addresses, booking references, flights) never goes to the public repo.
+content/
+.dev/
+PROGRESS.md
+scripts/geocode.mjs
+# Build output
+public/app.js
+public/app.js.map
+public/app.css
+public/index.html
+public/leaflet.css
+public/icon-*.png
+public/apple-touch-icon.png
+firebase-debug.log
+.firebase/
+.env
