@@ -144,4 +144,24 @@ select,input{min-height:40px;border:1px solid var(--line);background:var(--surfa
 .mktip{font-weight:600}.pop{min-width:170px}.pop p{font-size:.82rem;margin:.3rem 0}
 .leaflet-container{font-family:var(--font)}
 @media (min-width:700px){body{padding-top:var(--top)}}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* polish: press feedback, enter motion, touch behaviour */
+:root{--ease-out:cubic-bezier(.23,1,.32,1);--ease-drawer:cubic-bezier(.32,.72,0,1)}
+a,button,select,.row,.dchip,.daycard,.tick,.chip,.ev{touch-action:manipulation}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:8px}
+.btn,.chip,.chipbtn,.tick,.dchip,.daycard,.tabbar a{transition:transform 160ms var(--ease-out),background-color 160ms ease,border-color 160ms ease}
+.btn:active,.chip:active,.chipbtn:active,.tick:active,.dchip:active,.daycard:active,.tabbar a:active{transform:scale(.97)}
+.btn.sm{min-height:40px}.chipbtn{min-height:36px}
+.rdetail,.rdetail *{-webkit-user-select:text;user-select:text}
+#view.enter>*{animation:viewIn 160ms var(--ease-out) both}
+.tip{animation:viewIn 200ms var(--ease-out) both}
+@keyframes viewIn{from{opacity:0;transform:translateY(6px)}}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes sheetUp{from{transform:translateY(100%)}}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px) scale(.97)}}
+.sheet-bg{animation:fadeIn 160ms ease-out both}
+.sheet{animation:sheetUp 260ms var(--ease-drawer) both}
+#toast{position:fixed;left:0;right:0;bottom:calc(var(--tab) + 10px);display:flex;justify-content:center;z-index:90;pointer-events:none;padding:0 12px}
+.toast-in{pointer-events:auto;display:flex;gap:14px;align-items:center;background:var(--night);color:#fff;border-radius:14px;padding:10px 12px 10px 16px;box-shadow:0 8px 24px rgba(0,0,0,.3);animation:toastIn 180ms var(--ease-out) both;max-width:min(92vw,420px)}
+.toast-act{background:transparent;border:0;color:#9fc2ff;font-weight:700;padding:6px 10px;min-height:40px;cursor:pointer}
+@media (hover:hover) and (pointer:fine){.row:hover,.daycard:hover{border-color:color-mix(in srgb,var(--blue) 50%,var(--line))}}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;scroll-behavior:auto!important}.sheet{animation:fadeIn 120ms ease-out both}#view.enter>*,.tip,.toast-in{animation:fadeIn 120ms ease-out both}.btn:active,.chip:active,.chipbtn:active,.tick:active,.dchip:active,.daycard:active,.tabbar a:active{transform:none}}

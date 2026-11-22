@@ -4,7 +4,7 @@ import { content, state, planOf, dayOf, setPlan, undo, resetDay, lockDay, me } f
 import { computeDay, fmt, dur, toMin, leg, osloNow } from './engine.js';
 import { icon, TYPES, primaryType } from './icons.js';
 import { tr, L, spotName, spotNote, spotPark, dayTitle, dateLong, dayNum, wkShort, monShort } from './i18n.js';
-import { esc, typeChips, gmaps, amaps, tip, bindTips, lsGet, lsSet } from './ui.js';
+import { esc, typeChips, gmaps, amaps, tip, bindTips, lsGet, lsSet, toast } from './ui.js';
 import { DayMap } from './map.js';
 import { downloadDay } from './ics.js';
 
@@ -140,9 +140,15 @@ export function dayPage(dayId) {
       const cur = planOf(dayId);
       if (cur.includes(id)) return;
       content.days.days.forEach((d) => { if (d.id !== dayId && planOf(d.id).includes(id)) setPlan(d.id, planOf(d.id).filter((x) => x !== id), 'move'); });
+      const before = [...cur];
       setPlan(dayId, [...cur, id]);
+      toast(tr('Added to your day', '已加入你的一天'), { label: tr('Undo', '還原'), fn: () => setPlan(dayId, before, 'undo') });
     }
-    function removeSpot(id) { setPlan(dayId, planOf(dayId).filter((x) => x !== id)); }
+    function removeSpot(id) {
+      const before = [...planOf(dayId)];
+      setPlan(dayId, before.filter((x) => x !== id));
+      toast(tr('Moved to Options', '已移到備選'), { label: tr('Undo', '還原'), fn: () => setPlan(dayId, before, 'undo') });
+    }
     function move(id, dir) { const a = [...planOf(dayId)]; const i = a.indexOf(id); const j = i + dir; if (i < 0 || j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; setPlan(dayId, a); }
 
     function refresh() {
@@ -223,7 +229,10 @@ export function dayPage(dayId) {
       if (t.matches('[data-undo]')) { const en = state.log.find((x) => x.id === t.dataset.undo); if (en) undo(en); return; }
       if (t.matches('[data-focus]')) return map?.focus(t.dataset.focus);
       if (t.id === 'cal') return downloadDay(dayId);
-      if (t.id === 'reset') return resetDay(dayId);
+      if (t.id === 'reset') {
+        if (!t.dataset.armed) { t.dataset.armed = '1'; const keep = t.innerHTML; t.innerHTML = `${icon('warn', 17)} ${tr('Tap again to reset', '再點一次確認重設')}`; setTimeout(() => { t.innerHTML = keep; delete t.dataset.armed; }, 3000); return; }
+        resetDay(dayId); toast(tr('Day reset to the original plan', '已還原為原本計劃')); return;
+      }
       if (t.id === 'lock') return lockDay(dayId, !state.locks[dayId]);
       if (t.id === 'fit') return map?.fit();
       const ev = e.target.closest('[data-ev]');
@@ -239,6 +248,7 @@ export function dayPage(dayId) {
     const sw = q('#showopt'); if (sw) sw.addEventListener('change', () => { lsSet('showopts', sw.checked); map.fitted = false; refresh(); });
     bindTips(root);
     refresh();
+    root.querySelector('.dchip.on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
     return { refresh, destroy: () => { sortables.forEach((s) => s.destroy()); map?.destroy(); } };
   }
   return { html, mount };

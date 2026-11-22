@@ -14,5 +14,15 @@ export const tip = (id, title, body) => (lsGet('tip-' + id, false) ? '' :
   `<aside class="tip" data-tip="${id}"><div class="tip-ic">${icon('info', 20)}</div><div><b>${esc(title)}</b><p>${body}</p></div><button class="tip-x" data-tip-x="${id}" aria-label="${tr('Got it', '明白了')}">${tr('Got it', '明白')}</button></aside>`);
 export const bindTips = (root) => root.querySelectorAll('[data-tip-x]').forEach((b) => b.addEventListener('click', () => { lsSet('tip-' + b.dataset.tipX, true); b.closest('.tip').remove(); }));
 
+// Short confirmation after an action, with an optional Undo. Sits above the tab bar and clears itself.
+let toastTimer;
+export function toast(msg, action) {
+  const el = document.getElementById('toast'); if (!el) return;
+  clearTimeout(toastTimer);
+  el.innerHTML = `<div class="toast-in" role="status"><span>${esc(msg)}</span>${action ? `<button class="toast-act">${esc(action.label)}</button>` : ''}</div>`;
+  el.querySelector('.toast-act')?.addEventListener('click', () => { clearTimeout(toastTimer); el.innerHTML = ''; action.fn(); });
+  toastTimer = setTimeout(() => { el.innerHTML = ''; }, action ? 5000 : 2200);
+}
+
 export const legend = () => `<div class="legend">${Object.entries(TYPES).map(([k, v]) => `<span class="lg"><span class="tchip" style="--c:${v.c}">${icon(k, 15)}</span>${esc(L(v.l))}</span>`).join('')}</div>`;
 export const linkList = (arr) => `<ul class="srcs">${arr.map(([t, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ${icon('ext', 13)}</a></li>`).join('')}</ul>`;
