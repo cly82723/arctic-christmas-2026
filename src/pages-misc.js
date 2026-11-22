@@ -5,6 +5,7 @@ import { icon, TYPES } from './icons.js';
 import { tr, L, spotName, spotNote, dayTitle, dateLong, dateShort, dayNum, monShort, wkShort, getLang } from './i18n.js';
 import { esc, typeChips, legend, tip, bindTips, linkList, gmaps, amaps } from './ui.js';
 import { downloadTrip } from './ics.js';
+import { driveLine } from './pages-day.js';
 
 const days = () => content.days.days;
 const people = () => content.days.travellers;
@@ -16,7 +17,7 @@ const page = (html, mount) => ({ html, mount: mount || ((root) => { bindTips(roo
 function dayCard(d, i) {
   const dr = driveOf(d);
   return `<a class="daycard" href="#/day/${d.id}"><div class="date"><b>${dayNum(d.date)}</b><span>${monShort(d.date)}</span></div>
-    <div class="dc-body"><h3>${esc(dayTitle(d))}</h3><p>${esc(L(d.sum[0]))}</p><div class="rmeta">${dr ? `<span class="pill">${icon('car', 13)} ${dur(dr)}</span>` : ''}<span class="pill">${icon('stay', 13)} ${esc(sleepOf(d))}</span></div></div>${icon('right', 18)}</a>`;
+    <div class="dc-body"><h3>${esc(dayTitle(d))}</h3><p>${esc(driveLine(d))}</p><div class="rmeta">${dr ? `<span class="pill">${icon('car', 13)} ${dur(dr)}</span>` : ''}<span class="pill">${icon('stay', 13)} ${esc(sleepOf(d))}</span></div></div>${icon('right', 18)}</a>`;
 }
 
 export function startPage() {
@@ -53,7 +54,7 @@ export function todayPage() {
   const html = `<section><div class="eyebrow">${dateLong(day.date)}</div><h1 class="pt">${esc(dayTitle(day))}</h1>
     ${cur ? card(cur, tr('Now', '現在')) : ''}${nextI >= 0 ? card(rows[nextI], tr('Next', '下一站')) : `<div class="card"><p>${tr('Nothing more is planned today.', '今天沒有更多行程。')}</p></div>`}
     ${day.aurora ? `<div class="card aur"><h2>${icon('aurora', 20)} ${tr('Aurora check at 17:00', '17:00 極光檢查')}</h2><p>${tr('Look at cloud cover. Go only if a gap is coming.', '查看雲量，預計有空隙才出發。')} <a href="https://www.yr.no/en" target="_blank" rel="noopener">Yr ${icon('ext', 13)}</a></p></div>` : ''}
-    <div class="card readfirst"><h2>${tr('Read this first', '先讀這個')}</h2><ul>${day.sum.map((l) => `<li>${esc(L(l))}</li>`).join('')}</ul></div>
+    <div class="card readfirst"><h2>${tr('Read this first', '先讀這個')}</h2><ul>${[driveLine(day, calc), ...day.sum.slice(1).map(L)].map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
     <a class="btn" href="#/day/${day.id}">${icon('map', 17)} ${tr('Open the day map', '開啟當天地圖')}</a></section>`;
   return page(html, (root) => { root.querySelectorAll('[data-done]').forEach((b) => b.addEventListener('click', () => toggleTick(me.id || 'guest', 'stops', b.dataset.done, true))); return {}; });
 }

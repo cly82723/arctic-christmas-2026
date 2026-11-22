@@ -1,7 +1,12 @@
 // Day timing engine: works out arrival and departure times, drive totals and warnings for any order of stops.
 export const toMin = (s) => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
 export const fmt = (m) => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
-export const dur = (m) => { m = Math.round(m); const h = Math.floor(m / 60), r = m % 60; return h ? (r ? `${h} h ${r} min` : `${h} h`) : `${r} min`; };
+import { getLang } from './i18n.js';
+export const dur = (m) => {
+  m = Math.round(m); const h = Math.floor(m / 60), r = m % 60;
+  if (getLang() === 'zh') return h ? (r ? `${h} 小時 ${r} 分鐘` : `${h} 小時`) : `${r} 分鐘`;
+  return h ? (r ? `${h} h ${r} min` : `${h} h`) : `${r} min`;
+};
 
 const rad = (d) => (d * Math.PI) / 180;
 const hav = (a, b) => { const dLat = rad(b[0] - a[0]), dLon = rad(b[1] - a[1]); const x = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLon / 2) ** 2; return 2 * 6371 * Math.asin(Math.sqrt(x)); };

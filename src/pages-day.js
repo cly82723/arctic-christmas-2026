@@ -1,8 +1,8 @@
 // One page per day: map first, then a read-first summary, the timed day, drag-and-drop options, aurora and history.
 import Sortable from 'sortablejs';
 import { content, state, planOf, dayOf, setPlan, undo, resetDay, lockDay, me } from './store.js';
-import { computeDay, fmt, dur, toMin, leg } from './engine.js';
-import { icon, TYPES } from './icons.js';
+import { computeDay, fmt, dur, toMin, leg, osloNow } from './engine.js';
+import { icon, TYPES, primaryType } from './icons.js';
 import { tr, L, spotName, spotNote, spotPark, dayTitle, dateLong, dayNum, wkShort, monShort } from './i18n.js';
 import { esc, typeChips, gmaps, amaps, tip, bindTips, lsGet, lsSet } from './ui.js';
 import { DayMap } from './map.js';
@@ -13,6 +13,49 @@ const allAssigned = () => new Set(content.days.days.flatMap((d) => planOf(d.id))
 const isAdmin = () => me.id === 'cal';
 const personName = (id) => { const t = content.days.travellers.find((x) => x.id === id); return t ? L(t.name) : tr('Someone', '有人'); };
 const lightText = (day) => { const l = content.days.light[day.light]; return l ? (l.label ? L(l.label) : `${l.first}–${l.last}`) : ''; };
+
+// One live sentence about the day's driving, always from the current order of stops (including the last leg to the stay).
+export function driveLine(day, calc) {
+  if (day.info) return L(day.sum[0]);
+  const c = calc || computeDay(day, planOf(day.id), content);
+  return tr(`${dur(c.driveTotal)} of driving, home at about ${c.home ? fmt(c.home.arrive) : '--:--'}.`, `車程共 ${dur(c.driveTotal)}，約 ${c.home ? fmt(c.home.arrive) : '--:--'} 回到住處。`);
+}
+
+// Apple-Calendar-style day view: 06:00 to 02:00, blocks sized by time, hatched drive blocks, light band, and the stay as the last block.
+const PX = 1.05;
+function calendar(day, calc) {
+  const spots = content.spots; const rows = calc.rows; const compact = lsGet('calcompact', false);
+  const stay = (id) => spotName(spots[id]).replace(/^Stay: /, '').replace(/^住宿：/, '');
+  const dep = day.depart ? toMin(day.depart) : (rows[0]?.arrive ?? 540);
+  const evs = []; let cursor = dep;
+  rows.forEach((r) => {
+    if (!day.info && r.drive.m) evs.push({ k: r.drive.walk ? 'walk' : 'drive', t0: r.arrive - r.drive.m, t1: r.arrive, label: dur(r.drive.m), sub: r.drive.km ? `${r.drive.km} km` : '' });
+    evs.push({ k: 'stop', t0: r.arrive, t1: Math.max(r.depart, r.arrive + 15), id: r.id, bad: r.dark || r.late });
+    cursor = r.depart;
+  });
+  if (calc.home) evs.push({ k: calc.home.drive.walk ? 'walk' : 'drive', t0: cursor, t1: calc.home.arrive, label: dur(calc.home.drive.m), sub: calc.home.drive.km ? `${calc.home.drive.km} km` : '' });
+  const minT = Math.min(...evs.map((e) => e.t0), dep), maxT = Math.max(...evs.map((e) => e.t1));
+  const lo = compact ? Math.floor((minT - 30) / 60) * 60 : Math.min(360, Math.floor(minT / 60) * 60);
+  const hi = compact ? Math.ceil((maxT + 60) / 60) * 60 : Math.max(1560, Math.ceil(maxT / 60) * 60);
+  const top = (t) => (t - lo) * PX;
+  const stays = [];
+  if (!day.info && day.start) stays.push({ k: 'stay', t0: lo, t1: Math.max(dep, lo + 20), label: `${tr('At', '在')} ${stay(day.start)}`, sub: `${tr('Leave', '出發')} ${fmt(dep)}`, id: day.start });
+  if (calc.home) stays.push({ k: 'stay', t0: calc.home.arrive, t1: hi, label: `${tr('Sleep:', '住宿：')} ${stay(day.end)}`, sub: `${tr('Arrive', '抵達')} ${fmt(calc.home.arrive)}`, id: day.end });
+  const lt = calc.light;
+  const band = lt ? [[lo, toMin(lt.first), 'n'], [toMin(lt.first), toMin(lt.gs), 'b'], [toMin(lt.gs), toMin(lt.ge), 'g'], [toMin(lt.ge), toMin(lt.last), 'b'], [toMin(lt.last), hi, 'n']].map(([a, b, c]) => `<i class="${c}" style="top:${top(Math.max(a, lo))}px;height:${Math.max(0, (Math.min(b, hi) - Math.max(a, lo)) * PX)}px"></i>`).join('') : '';
+  let hours = ''; for (let h = Math.ceil(lo / 60) * 60; h <= hi; h += 60) hours += `<div class="hr" style="top:${top(h)}px"><span>${fmt(h)}</span></div>`;
+  const block = (e) => {
+    if ((e.k === 'drive' || e.k === 'walk') && e.t1 - e.t0 < 12) return `<div class="ev ${e.k} tiny" title="${esc(e.label)}" style="top:${top(e.t0)}px;height:${Math.max((e.t1 - e.t0) * PX, 4)}px"></div>`;
+    const h = Math.max((e.t1 - e.t0) * PX, e.k === 'drive' ? 22 : 24);
+    if (e.k === 'stop') { const s = spots[e.id]; const c = (TYPES[primaryType(s.t)] || TYPES.photo).c; const tall = h >= 64;
+      return `<div class="ev stop ${e.bad ? 'bad' : ''} ${h < 44 ? 'short' : ''}" data-ev="${e.id}" style="top:${top(e.t0)}px;height:${h}px;--c:${c}"><b>${s.fixed ? icon('fixed', 13) + ' ' : ''}${esc(spotName(s))}</b><small>${fmt(e.t0)}–${fmt(e.t1)}</small>${tall ? `<div class="evc">${typeChips(s.t, 4)}</div>` : ''}</div>`; }
+    if (e.k === 'stay') return `<div class="ev stay" data-ev="${e.id}" style="top:${top(e.t0)}px;height:${Math.max((e.t1 - e.t0) * PX, 24)}px">${icon('stay', 15)} <b>${esc(e.label)}</b><small>${esc(e.sub)}</small></div>`;
+    return `<div class="ev ${e.k}" style="top:${top(e.t0)}px;height:${h}px">${icon(e.k === 'walk' ? 'walk' : 'car', 14)} <b>${esc(e.label)}</b> <small>${esc(e.sub)}</small></div>`;
+  };
+  const now = osloNow(content.days.trip.tz); const nowLine = now.iso === day.date && now.min >= lo && now.min <= hi ? `<div class="nowl" style="top:${top(now.min)}px"><span>${fmt(now.min)}</span></div>` : '';
+  return `<div class="calhead"><span class="lt"><span><i class="dot b"></i>${tr('Blue light', '藍光')}</span><span><i class="dot g"></i>${tr('Glow', '餘暉')}</span><span class="hatch">${tr('Driving', '車程')}</span></span><button class="chipbtn" id="calcompact">${compact ? tr('Show 06:00–02:00', '顯示 06:00–02:00') : tr('Busy hours only', '只看繁忙時段')}</button></div>
+    <div class="cal" style="height:${(hi - lo) * PX}px">${hours}<div class="lband">${band}</div>${[...stays, ...evs].map(block).join('')}${nowLine}</div>`;
+}
 
 function trayIds(day, plan) {
   const assigned = allAssigned();
@@ -64,10 +107,12 @@ export function dayPage(dayId) {
     ${day.nomap ? '' : `<div class="mapcard"><div id="map" role="application" aria-label="${tr('Map of the day', '當天地圖')}"></div>
       <div class="maptools"><label class="sw"><input type="checkbox" id="showopt" ${lsGet('showopts', true) ? 'checked' : ''}><span></span>${tr('Show options on map', '地圖顯示備選')}</label><button class="btn sm" id="fit">${icon('map', 15)} ${tr('Fit all', '顯示全部')}</button></div>
       <div class="mapkey"><span><i class="k plan"></i>${tr('Your day', '你的一天')}</span><span><i class="k alt"></i>${tr('Options', '備選')}</span><span><i class="k au"></i>${tr('Aurora', '極光')}</span><span><i class="k line"></i>${tr('Road route', '行車路線')}</span></div></div>`}
-    <div class="card readfirst"><h2>${tr('Read this first', '先讀這個')}</h2><ul>${day.sum.map((l) => `<li>${esc(L(l))}</li>`).join('')}</ul></div>
+    <div class="card readfirst"><h2>${tr('Read this first', '先讀這個')}</h2><ul id="rf"></ul></div>
     <div id="daybar"></div>
+    <h2 class="sec">${tr('Day view', '日程表')} <small>${tr('tap a block for details', '點選方塊查看詳情')}</small></h2>
+    <div id="cal"></div><div id="selcard"></div>
     ${day.info ? '' : tip('swap', tr('Swap spots by dragging', '拖放更換景點'), tr('Press and hold a spot, then drag it between <b>Your day</b> and <b>Options</b>. Press and hold an option to see it on the map. Or just tap <b>Add</b>.', '按住景點片刻，然後在<b>你的一天</b>與<b>備選</b>之間拖動。按住備選可在地圖上查看。也可以直接點<b>加入</b>。'))}
-    <h2 class="sec">${tr('Your day', '你的一天')}</h2>
+    <h2 class="sec">${day.info ? tr('Your day', '你的一天') : tr('Arrange your day', '安排你的一天')} ${day.info ? '' : `<small>${tr('drag to reorder', '拖動調整次序')}</small>`}</h2>
     <div id="planwrap"></div>
     ${day.alts.length || !day.info ? `<h2 class="sec">${tr('Options', '備選')} <small>${tr('suggested time · extra driving', '建議時間 · 額外車程')}</small></h2><ul id="tray" class="list tray"></ul><div id="more"></div>` : ''}
     <div id="aurora"></div>
@@ -120,9 +165,13 @@ export function dayPage(dayId) {
         <div class="meter ${calc.warnings.includes('cap') ? 'over' : ''}"><i style="width:${Math.min(100, calc.driveTotal / calc.cap * 100)}%"></i></div>
         <p class="mtxt">${icon('car', 15)} ${tr('Driving', '車程')} <b>${dur(calc.driveTotal)}</b> ${tr('of 5 h', '，上限 5 小時')}${calc.home ? ` · ${tr('home about', '約')} <b>${fmt(calc.home.arrive)}</b>${tr('', ' 回到住處')}` : ''}</p>
         ${w.length ? `<ul class="warns">${w.join('')}</ul>` : ''}</div>`;
+      // read-first summary with a live driving line, and the calendar day view
+      q('#rf').innerHTML = (day.info ? day.sum.map(L) : [driveLine(day, calc), ...day.sum.slice(1).map(L)]).map((l) => `<li>${esc(l)}</li>`).join('');
+      q('#cal').innerHTML = calendar(day, calc);
+      q('#calcompact')?.addEventListener('click', () => { lsSet('calcompact', !lsGet('calcompact', false)); refresh(); });
       // plan list
       const start = day.info ? '' : `<div class="endrow">${icon('stay', 17)} <span>${tr('Leave', '出發：')} ${esc(name(day.start))}${day.depart ? ` ${tr('at', '於')} <b>${day.depart}</b>` : ''}</span></div>`;
-      const end = day.info || !calc.home ? '' : `<div class="endrow">${icon('stay', 17)} <span>${tr('Sleep:', '住宿：')} ${esc(name(day.end))}</span></div>`;
+      const end = day.info || !calc.home ? '' : `<div class="endrow">${icon('stay', 17)} <span>${tr('Sleep:', '住宿：')} ${esc(name(day.end).replace(/^Stay: /, '').replace(/^住宿：/, ''))} · ${tr('arrive about', '約')} <b>${fmt(calc.home.arrive)}</b>${tr('', ' 抵達')} · ${icon('car', 14)} ${dur(calc.home.drive.m)}</span></div>`;
       q('#planwrap').innerHTML = `${start}<ul id="plan" class="list">${calc.rows.map((r) => planRow(day, r, day.info || lockedRow(day, r.id))).join('')}</ul>${end}${day.night ? `<p class="night">${icon('moon', 15)} ${esc(L(day.night))}</p>` : ''}`;
       // options
       const tray = trayIds(day, plan);
@@ -165,7 +214,7 @@ export function dayPage(dayId) {
     }
 
     root.addEventListener('click', (e) => {
-      const t = e.target.closest('button, a, .row'); if (!t) return;
+      const t = e.target.closest('button, a, .row, [data-ev]'); if (!t) return;
       const g = (a) => t.closest(`[${a}]`)?.getAttribute(a);
       if (t.matches('[data-add]')) return addSpot(t.dataset.add);
       if (t.matches('[data-rm]')) return removeSpot(t.dataset.rm);
@@ -177,6 +226,12 @@ export function dayPage(dayId) {
       if (t.id === 'reset') return resetDay(dayId);
       if (t.id === 'lock') return lockDay(dayId, !state.locks[dayId]);
       if (t.id === 'fit') return map?.fit();
+      const ev = e.target.closest('[data-ev]');
+      if (ev) { const id = ev.dataset.ev; const s = content.spots[id]; const inPlan = planOf(dayId).includes(id);
+        root.querySelector('#selcard').innerHTML = `<div class="card sel"><h2>${esc(spotName(s))}</h2><div class="rmeta">${typeChips(s.t, 6)}${s.d ? `<span class="pill">${icon('clock', 13)} ${dur(s.d)}</span>` : ''}</div><p>${esc(spotNote(s))}</p><p class="park">${icon('park', 15)} ${esc(spotPark(s))}</p>
+          <div class="acts">${s.c ? `<a class="btn sm" href="${gmaps(s)}" target="_blank" rel="noopener">${icon('map', 15)} Google</a><a class="btn sm" href="${amaps(s, spotName(s))}" target="_blank" rel="noopener">${icon('map', 15)} Apple</a>` : ''}${inPlan && !lockedRow(day, id) && !day.info ? `<button class="btn sm danger" data-rm="${id}">${icon('x', 15)} ${tr('Remove', '移除')}</button>` : ''}<button class="btn sm" data-selx="1">${icon('x', 15)}</button></div></div>`;
+        map?.focus(id); return; }
+      if (t.matches('[data-selx]')) { root.querySelector('#selcard').innerHTML = ''; return; }
       if (t.matches('.row') && !e.target.closest('a')) { const d = t.querySelector('.rdetail'); if (d) d.hidden = !d.hidden; map?.focus(t.dataset.id); void g; }
     });
     root.addEventListener('mouseover', (e) => { const r = e.target.closest('.row'); if (r && r.dataset.id) map?.highlight(r.dataset.id, true); });

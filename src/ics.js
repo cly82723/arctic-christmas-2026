@@ -12,7 +12,8 @@ const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace
 
 function dayEvents(day) {
   const calc = computeDay(day, planOf(day.id), content);
-  return calc.rows.map((r) => {
+  const stayEvent = calc.home && content.spots[day.end] ? ['BEGIN:VEVENT', `UID:${day.id}-stay@arctic-christmas-2026`, `DTSTAMP:${utc(day.date, 0, 0)}`, `DTSTART:${utc(day.date, calc.home.arrive, 1)}`, `DTEND:${utc(day.date, calc.home.arrive + 30, 1)}`, `SUMMARY:${esc(spotName(content.spots[day.end]))}`, `DESCRIPTION:${esc(spotNote(content.spots[day.end]))}`, 'END:VEVENT'].join('\r\n') : null;
+  const events = calc.rows.map((r) => {
     const s = content.spots[r.id]; const off = s.area === 'doha' ? 3 : 1;
     const end = Math.max(r.depart, r.arrive + 15);
     const map = s.c ? ` https://www.google.com/maps/search/?api=1&query=${s.c[0]},${s.c[1]}` : '';
@@ -20,6 +21,7 @@ function dayEvents(day) {
       `SUMMARY:${esc(spotName(s))}`, `DESCRIPTION:${esc(spotNote(s) + map)}`, s.c ? `LOCATION:${esc(spotName(s))}` : '',
       'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(spotName(s))}`, 'TRIGGER:-PT30M', 'END:VALARM', 'END:VEVENT'].filter(Boolean).join('\r\n');
   });
+  return stayEvent ? [...events, stayEvent] : events;
 }
 function save(name, body) {
   const blob = new Blob([`BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Arctic Christmas 2026//EN\r\nCALSCALE:GREGORIAN\r\n${body}\r\nEND:VCALENDAR`], { type: 'text/calendar' });
