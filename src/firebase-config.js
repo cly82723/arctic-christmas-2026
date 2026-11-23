@@ -1,8 +1,9 @@
-// Paste your Firebase web app config here after creating the project (these values are not secret).
-// While this is null the app runs in demo mode: it loads content from the local dev server and saves only on this device.
-export const FIREBASE = null;
-/* Example shape:
+// Firebase web app config (these values are public identifiers, not secrets; access is controlled by the trip code and firestore.rules).
 export const FIREBASE = {
-  apiKey: '...', authDomain: '...', projectId: '...', storageBucket: '...', messagingSenderId: '...', appId: '...'
+  apiKey: 'AIzaSyBGCCf5QWAlHWBvshMeU7E_iqJNRapYj9Y',
+  authDomain: 'arctic-christmas-2026.firebaseapp.com',
+  projectId: 'arctic-christmas-2026',
+  storageBucket: 'arctic-christmas-2026.firebasestorage.app',
+  messagingSenderId: '938626876973',
+  appId: '1:938626876973:web:20de39b3c46883d6ebdaa4'
 };
-*/
