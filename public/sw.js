@@ -1,10 +1,10 @@
 // Offline support: the app shell is cached on install and refreshed in the background; map tiles are cached as you view them.
 // Trip data itself is cached by Firestore (IndexedDB), not here.
-const SHELL = 'shell-v1';
+const SHELL = 'shell-v3';
 const TILES = 'tiles-v1';
 const FILES = ['/', '/index.html', '/app.js', '/app.css', '/leaflet.css', '/manifest.webmanifest', '/apple-touch-icon.png', '/icon-192.png'];
 
-self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELL).then((c) => c.addAll(FILES)).then(() => self.skipWaiting())); });
+self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELL).then((c) => c.addAll(FILES.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => ![SHELL, TILES].includes(k)).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 
 self.addEventListener('fetch', (e) => {

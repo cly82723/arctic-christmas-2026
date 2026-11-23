@@ -5,7 +5,7 @@ import { content, state, planOf, dayOf, setPlan, undo, resetDay, lockDay, me } f
 import { computeDay, fmt, dur, toMin, leg } from './engine.js';
 import { icon } from './icons.js';
 import { tr, L, spotName, spotNote, spotPark, dayTitle, dayNum, wkShort, monShort } from './i18n.js';
-import { esc, typeChips, gmaps, amaps, tip, bindTips, lsGet, lsSet, toast, photoLink } from './ui.js';
+import { esc, typeChips, gmaps, amaps, tip, bindTips, lsGet, lsSet, toast, photoLink, parkLink } from './ui.js';
 import { DayMap } from './map.js';
 import { downloadDay } from './ics.js';
 
@@ -48,7 +48,7 @@ function planRow(r, locked) {
     <div class="rbody"><p class="rt">${esc(spotName(s))}</p>
       <div class="rmeta">${typeChips(s.t)}${warn}</div>
       <div class="rdetail" hidden><p>${esc(spotNote(s))}</p><p class="park">${icon('park', 15)} ${esc(spotPark(s))}</p>
-        <div class="acts">${s.c ? `${photoLink(s)}<a class="btn sm" href="${gmaps(s)}" target="_blank" rel="noopener">${icon('map', 15)} Google</a><a class="btn sm" href="${amaps(s, spotName(s))}" target="_blank" rel="noopener">${icon('map', 15)} Apple</a>` : ''}
+        <div class="acts">${s.c ? `${photoLink(s)}${parkLink(s)}<a class="btn sm" href="${gmaps(s)}" target="_blank" rel="noopener">${icon('map', 15)} Google</a><a class="btn sm" href="${amaps(s, spotName(s))}" target="_blank" rel="noopener">${icon('map', 15)} Apple</a>` : ''}
         ${locked ? '' : `<button class="btn sm" data-up="${r.id}" aria-label="${tr('Move earlier', '提前')}">${icon('up', 15)}</button><button class="btn sm" data-dn="${r.id}" aria-label="${tr('Move later', '延後')}">${icon('down', 15)}</button><button class="btn sm danger" data-rm="${r.id}">${icon('x', 15)} ${tr('Remove', '移除')}</button>`}</div></div>
     </div></li>`;
 }
@@ -59,7 +59,7 @@ function optRow(id, drive) {
     <span class="grip">${icon('grip', 18)}</span>
     <div class="rbody"><p class="rt">${esc(spotName(s))}</p>
       <div class="rmeta">${typeChips(s.t)}<span class="pill">${icon(s.l === 'night' ? 'moon' : 'clock', 14)} ${dur(s.d || 15)} · ${light}</span>${drive ? `<span class="pill">${icon('car', 14)} ${tr('+', '多 ')}${dur(drive)} ${tr('driving', '車程')}</span>` : ''}</div>
-      <div class="rdetail" hidden><p>${esc(spotNote(s))}</p><p class="park">${icon('park', 15)} ${esc(spotPark(s))}</p><div class="acts">${photoLink(s)}</div></div></div>
+      <div class="rdetail" hidden><p>${esc(spotNote(s))}</p><p class="park">${icon('park', 15)} ${esc(spotPark(s))}</p><div class="acts">${photoLink(s)}${parkLink(s)}</div></div></div>
     <button class="btn sm add" data-add="${id}" aria-label="${tr('Add', '加入')} ${esc(spotName(s))}">${icon('plus', 16)} ${tr('Add', '加入')}</button></li>`;
 }
 

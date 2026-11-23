@@ -1,5 +1,5 @@
 // App shell: header, bottom tabs, hash router, name picker and sync status.
-import { init, subscribe, content, net, me, needsInvite } from './store.js';
+import { init, subscribe, content, net, me, needsInvite, setCode } from './store.js';
 import { tr, getLang, setLang } from './i18n.js';
 import { icon } from './icons.js';
 import { esc } from './ui.js';
@@ -51,7 +51,12 @@ export function rerender(animate = false) {
   view.classList.toggle('enter', animate === true);
   const seg = location.hash.replace(/^#\/?/, '').split('/');
   document.querySelectorAll('[data-tab]').forEach((a) => a.classList.toggle('on', a.dataset.tab === (['today', 'days', 'todo', 'more'].includes(seg[0]) ? seg[0] : ['spots', 'pack', 'aurora', 'know', 'apps', 'bookings', 'names', 'how'].includes(seg[0]) ? 'more' : seg[0] === 'day' ? 'days' : '')));
-  if (needsInvite()) { view.innerHTML = `<section class="card"><h2>${tr('Open your invite link', '請開啟你的邀請連結')}</h2><p>${tr('This app opens only with the private link CaL sent to the group. Open that link once on this phone.', '這個應用程式只能用 CaL 發給大家的私人連結開啟。請在這部手機上開啟該連結一次。')}</p></section>`; return; }
+  if (needsInvite()) {
+    view.innerHTML = `<section class="card"><h2>${tr('Paste your invite link', '貼上你的邀請連結')}</h2><p>${tr('This app opens only with the private link CaL sent to the group. Paste the whole link here once; this phone will remember it.', '這個應用程式只能用 CaL 發給大家的私人連結開啟。請在此貼上完整連結一次，這部手機會記住。')}</p>
+      <form id="inviteform" class="addrow"><input id="invite" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://arctic-christmas-2026.web.app/#k=…" aria-label="${tr('Invite link', '邀請連結')}"><button class="btn">${tr('Open', '開啟')}</button></form><p id="inviteerr" class="warn" hidden>${tr('That does not look like the invite link. Copy the whole link, including the part after #k=.', '這不像是邀請連結。請複製完整連結，包括 #k= 之後的部分。')}</p></section>`;
+    view.querySelector('#inviteform').addEventListener('submit', (e) => { e.preventDefault(); if (setCode(view.querySelector('#invite').value)) location.reload(); else view.querySelector('#inviteerr').hidden = false; });
+    return;
+  }
   if (net.error) { view.innerHTML = `<section class="card"><h2>${tr('Something went wrong', '出現問題')}</h2><p>${esc(net.error)}</p></section>`; return; }
   if (!content.ready) { view.innerHTML = `<section class="card"><p>${tr('Loading the plan…', '載入行程中…')}</p></section>`; return; }
   const p = seg[0] === 'day' ? dayPage(seg[1] || 'd0') : (routes[seg[0] || ''] || routes[''])();

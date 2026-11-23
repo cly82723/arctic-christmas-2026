@@ -18,8 +18,15 @@ export const me = { get id() { return ls.get('who', null); }, set(id) { ls.set('
 
 export function getCode() {
   const m = /[#&]k=([A-Za-z0-9_-]{24,})/.exec(location.hash);
-  if (m) { ls.set('code', m[1]); history.replaceState(null, '', location.pathname + location.search + '#/'); }
+  // The code stays in the address so iPhone "Add to Home Screen" captures it (Home Screen apps don't share Safari's storage).
+  if (m) ls.set('code', m[1]);
   return ls.get('code', null);
+}
+// Accepts a pasted invite link or the bare code. Returns true when it looks valid.
+export function setCode(raw) {
+  const m = /(?:k=)?([A-Za-z0-9_-]{24,})\s*$/.exec(String(raw || '').trim());
+  if (!m) return false;
+  ls.set('code', m[1]); return true;
 }
 export const needsInvite = () => !!FIREBASE && !getCode();
 

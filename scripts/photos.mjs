@@ -1,7 +1,7 @@
 // Finds freely licensed photos on Wikimedia Commons for each scenic spot and writes .dev/photos.json plus a review page.
 // Only CC BY, CC BY-SA, CC0 and public-domain images are kept, each with its author and licence so the app can credit it.
 // Run: node scripts/photos.mjs   then open http://localhost:5173/__photos while the dev server runs.
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { SPOTS } from '../content/spots.mjs';
 
 const Q = {
@@ -18,10 +18,13 @@ const Q = {
 const OK = /^(CC BY|CC BY-SA|CC0|Public domain|PD)/i;
 const strip = (h) => String(h || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const out = {}; const review = [];
+Q.yellow_house = 'Sakrisøy yellow house'; Q.reine_rorbuer = 'Reine rorbuer';
+// Keep photos you already approved; only search for spots that have none yet.
+let out = {}; try { out = JSON.parse(readFileSync(new URL('../.dev/photos.json', import.meta.url), 'utf8')); } catch { /* first run */ }
+const review = [];
 
 for (const [id, q] of Object.entries(Q)) {
-  if (!SPOTS[id]) continue;
+  if (!SPOTS[id] || out[id]) continue;
   const url = 'https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=20&prop=imageinfo&iiprop=url|extmetadata|size|mime&iiurlwidth=800&gsrsearch=' + encodeURIComponent(q + ' filetype:bitmap');
   let pages = {};
   for (let attempt = 0; attempt < 4; attempt++) {
