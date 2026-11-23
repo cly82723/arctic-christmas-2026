@@ -39,7 +39,7 @@ export const isLocked = (dayId, spotId) => !!state.locks[dayId] || !!content.spo
 // ---------- demo backend ----------
 async function startDemo() {
   const c = await (await fetch('/__content.json')).json();
-  Object.assign(content, { spots: c.spots, days: c.days, routes: c.routes, guides: c.guides, photos: c.photos || {}, ready: true });
+  Object.assign(content, { spots: c.spots, days: c.days, routes: c.routes, guides: c.guides, photos: c.photos || {}, ownPhotos: c.ownPhotos || {}, ready: true });
   const saved = ls.get('demo-state', null);
   if (saved) Object.assign(state, saved);
   net.mode = 'demo';
@@ -72,6 +72,7 @@ async function startFirestore(code) {
   for (const t of content.days.travellers) onSnapshot(base('state', 'p_' + t.id), (s) => { track(s); state.people[t.id] = s.data() || {}; emit(); });
   onSnapshot(query(collection(db, 'trips', code, 'log'), orderBy('at', 'desc'), limit(60)), (s) => { state.log = s.docs.map((d) => ({ id: d.id, ...d.data() })); emit(); });
   backend = {
+    ownPhotos: async (ref) => { const s = await getDoc(base('content', 'ph_' + ref)); return s.exists() ? JSON.parse(s.data().json) : []; },
     plan: (dayId, ids) => setDoc(base('state', 'plan'), { days: { [dayId]: ids } }, { merge: true }),
     lock: (dayId, v) => setDoc(base('state', 'plan'), { locks: { [dayId]: v } }, { merge: true }),
     todo: (id, v) => setDoc(base('state', 'todos'), { items: { [id]: v } }, { merge: true }),
@@ -90,6 +91,14 @@ export async function init() {
     else if (!FIREBASE) await startDemo();
   } catch (e) { net.error = String(e.message || e); console.error(e); }
   emit();
+}
+
+// Photos you supplied for a spot, fetched once when its sheet first opens (then cached, also offline).
+const ownCache = {};
+export async function ownPhotos(id) {
+  const ref = content.photos?.__own?.[id]; if (!ref) return [];
+  if (!ownCache[ref]) ownCache[ref] = net.mode === 'live' ? await backend.ownPhotos(ref) : (content.ownPhotos?.[ref] || []);
+  return ownCache[ref];
 }
 
 // ---------- actions (same for both backends) ----------

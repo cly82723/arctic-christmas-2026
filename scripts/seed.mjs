@@ -12,12 +12,18 @@ export function buildContent() {
   try { routes = JSON.parse(readFileSync(new URL('../.dev/routes.json', import.meta.url), 'utf8')); } catch { /* run npm run routes */ }
   let photos = {};
   try { photos = JSON.parse(readFileSync(new URL('../.dev/photos.json', import.meta.url), 'utf8')); } catch { /* run node scripts/photos.mjs */ }
-  // Photos you supplied (credited, private to the trip) go first in each spot's sheet.
-  try {
-    const own = JSON.parse(readFileSync(new URL('../.dev/photos-ig.json', import.meta.url), 'utf8'));
-    for (const [id, list] of Object.entries(own)) photos[id] = [...list, ...(photos[id] || [])];
-  } catch { /* none supplied */ }
+  // Photos you supplied (credited, private to the trip) are stored one document per spot and shown first.
+  let own = {};
+  try { own = JSON.parse(readFileSync(new URL('../.dev/photos-ig.json', import.meta.url), 'utf8')); } catch { /* none supplied */ }
+  const ownRef = Object.fromEntries(Object.keys(own).map((id) => [id, id]));
+  // Copies of a spot used on another day (for example Nordkjosbotn on 26 Dec) share the original's photos.
+  for (const s of Object.values(SPOTS)) if (s.of) {
+    if (!photos[s.id] && photos[s.of]) photos[s.id] = photos[s.of];
+    if (!ownRef[s.id] && own[s.of]) ownRef[s.id] = s.of;
+  }
+  photos.__own = ownRef;
   return {
+    ownPhotos: own,
     photos,
     spots: SPOTS,
     days: { days: DAYS, light: LIGHT, trip: TRIP, travellers: TRAVELLERS },
@@ -41,6 +47,10 @@ if (process.argv[1] && process.argv[1].endsWith('seed.mjs')) {
     const db = getFirestore(initializeApp(FIREBASE));
     const c = buildContent();
     for (const [name, data] of Object.entries(c)) {
+      if (name === 'ownPhotos') {
+        for (const [id, list] of Object.entries(data)) { await setDoc(doc(db, 'trips', arg, 'content', 'ph_' + id), { json: JSON.stringify(list), at: Date.now() }); console.log('seeded own photos', id, JSON.stringify(list).length, 'bytes'); }
+        continue;
+      }
       await setDoc(doc(db, 'trips', arg, 'content', name), { json: JSON.stringify(data), at: Date.now() });
       console.log('seeded', name, JSON.stringify(data).length, 'bytes');
     }

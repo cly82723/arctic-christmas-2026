@@ -5,7 +5,7 @@ import { icon } from './icons.js';
 import { esc } from './ui.js';
 import { dayPage } from './pages-day.js';
 import * as M from './pages-misc.js';
-import { openPhotos } from './photos.js';
+import { openPhotos, hasPhotos } from './photos.js';
 
 const app = document.getElementById('app');
 let current = null; let view = null;
@@ -75,7 +75,7 @@ function onChange() {
 shell();
 addEventListener('hashchange', () => rerender(true));
 // "See photos" links open the in-app photo sheet when photos exist, otherwise they open the image search.
-document.addEventListener('click', (e) => { const a = e.target.closest('[data-photos]'); if (a && openPhotos(a.dataset.photos)) e.preventDefault(); });
+document.addEventListener('click', (e) => { const a = e.target.closest('[data-photos]'); if (a && hasPhotos(a.dataset.photos)) { e.preventDefault(); openPhotos(a.dataset.photos); } });
 subscribe(onChange);
 init().then(() => { status(); rerender(true); if (content.ready && !me.id) pickName(); });
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
