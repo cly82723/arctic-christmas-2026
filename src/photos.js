@@ -19,7 +19,7 @@ export function openPhotos(id) {
   m.innerHTML = `<div class="sheet-bg" data-close><div class="sheet photos" role="dialog" aria-modal="true" aria-label="${esc(tr('Photos of', '相片：'))} ${esc(name)}">
     <div class="ph-head"><h2>${esc(name)}</h2><button class="btn sm" data-close>${icon('x', 16)} ${tr('Close', '關閉')}</button></div>
     <div class="ph-strip">${list.map((p, i) => `<figure><img src="${esc(p.src)}" alt="${esc(name)} ${i + 1}" loading="lazy" decoding="async" width="${p.w || 800}" height="${p.h || 600}"><figcaption>${esc(p.author)} · <a href="${esc(p.page)}" target="_blank" rel="noopener">${esc(p.license)}</a></figcaption></figure>`).join('')}</div>
-    <p class="ph-note">${tr('Swipe for more. Photos from Wikimedia Commons, shown under each photographer\'s licence. Most are not taken in December, so expect darker, snowier scenes.', '左右掃看更多。相片來自 Wikimedia Commons，按各攝影師的授權使用。大部分不是十二月拍攝，實際景色會更暗、雪更多。')}</p>
+    <p class="ph-note">${tr('Swipe for more. Each photo credits its photographer. December is darker than most of these, with a low pink glow around midday.', '左右掃看更多。每張相片都註明攝影師。十二月會比大部分相片更暗，中午前後只有低低的粉紅餘暉。')}</p>
   </div></div>`;
   m.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', (e) => { if (e.target === el || el.tagName === 'BUTTON') close(); }));
   document.addEventListener('keydown', onKey);

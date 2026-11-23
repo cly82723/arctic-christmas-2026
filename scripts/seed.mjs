@@ -12,6 +12,11 @@ export function buildContent() {
   try { routes = JSON.parse(readFileSync(new URL('../.dev/routes.json', import.meta.url), 'utf8')); } catch { /* run npm run routes */ }
   let photos = {};
   try { photos = JSON.parse(readFileSync(new URL('../.dev/photos.json', import.meta.url), 'utf8')); } catch { /* run node scripts/photos.mjs */ }
+  // Photos you supplied (credited, private to the trip) go first in each spot's sheet.
+  try {
+    const own = JSON.parse(readFileSync(new URL('../.dev/photos-ig.json', import.meta.url), 'utf8'));
+    for (const [id, list] of Object.entries(own)) photos[id] = [...list, ...(photos[id] || [])];
+  } catch { /* none supplied */ }
   return {
     photos,
     spots: SPOTS,

@@ -166,6 +166,8 @@ body{font-variant-numeric:tabular-nums}
 .leaflet-touch .leaflet-bar a{width:44px;height:44px;line-height:44px}
 .leaflet-control-attribution{font-size:11px!important}
 .lead{margin:.3rem 0 1rem}
+.chip,.brand span,.sync{white-space:nowrap}.topr{flex:none}.brand{min-width:0}.brand span{overflow:hidden;text-overflow:ellipsis}
+@media (max-width:400px){.brand span{font-size:.95rem}.chip{padding:5px 11px}}
 .maptools{flex-wrap:wrap}.maptools .btn,.maptools .sw{white-space:nowrap}
 /* photo sheet: one swipeable strip, credited, loaded only when opened */
 .sheet.photos{max-width:600px;padding-left:0;padding-right:0}
