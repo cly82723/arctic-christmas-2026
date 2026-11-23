@@ -32,7 +32,7 @@ export const isLocked = (dayId, spotId) => !!state.locks[dayId] || !!content.spo
 // ---------- demo backend ----------
 async function startDemo() {
   const c = await (await fetch('/__content.json')).json();
-  Object.assign(content, { spots: c.spots, days: c.days, routes: c.routes, guides: c.guides, ready: true });
+  Object.assign(content, { spots: c.spots, days: c.days, routes: c.routes, guides: c.guides, photos: c.photos || {}, ready: true });
   const saved = ls.get('demo-state', null);
   if (saved) Object.assign(state, saved);
   net.mode = 'demo';
@@ -56,7 +56,8 @@ async function startFirestore(code) {
     if (!snap.exists()) throw new Error('Trip content not found. Check the invite link.');
     out[name] = JSON.parse(snap.data().json);
   }
-  Object.assign(content, { spots: out.spots, days: out.days, routes: out.routes, guides: out.guides, ready: true });
+  try { const p = await getDoc(base('content', 'photos')); out.photos = p.exists() ? JSON.parse(p.data().json) : {}; } catch { out.photos = {}; }
+  Object.assign(content, { spots: out.spots, days: out.days, routes: out.routes, guides: out.guides, photos: out.photos, ready: true });
   const track = (snap) => { net.synced = !snap.metadata.hasPendingWrites; };
   onSnapshot(base('state', 'plan'), (s) => { track(s); const d = s.data() || {}; state.plan = d.days || {}; state.locks = d.locks || {}; emit(); });
   onSnapshot(base('state', 'todos'), (s) => { track(s); const d = s.data() || {}; state.todos = d.items || {}; state.custom = d.custom || []; emit(); });

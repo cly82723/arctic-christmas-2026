@@ -9,6 +9,9 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 const root = join(process.cwd(), 'public');
 createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
+  if (url.pathname === '/__photos') {
+    try { const html = await readFile(join(process.cwd(), '.dev', 'photos-review.html')); res.writeHead(200, { 'content-type': TYPES['.html'] }); return res.end(html); } catch { res.writeHead(404); return res.end('Run node scripts/photos.mjs first'); }
+  }
   if (url.pathname === '/__content.json') {
     res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
     return res.end(JSON.stringify(buildContent()));

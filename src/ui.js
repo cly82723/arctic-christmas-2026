@@ -24,7 +24,7 @@ export function toast(msg, action) {
   toastTimer = setTimeout(() => { el.innerHTML = ''; }, action ? 5000 : 2200);
 }
 
-export const photoLink = (s) => `<a class="btn sm" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(stripCjk(s.n[0]) + ' Norway winter')}" target="_blank" rel="noopener">${icon('eye', 15)} ${tr('See photos', '看相片')}</a>`;
+export const photoLink = (s) => `<a class="btn sm" data-photos="${s.id}" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(stripCjk(s.n[0]) + ' Norway winter')}" target="_blank" rel="noopener">${icon('eye', 15)} ${tr('See photos', '看相片')}</a>`;
 
 export const legend = () => `<div class="legend">${Object.entries(TYPES).map(([k, v]) => `<span class="lg"><span class="tchip" style="--c:${v.c}">${icon(k, 15)}</span>${esc(L(v.l))}</span>`).join('')}</div>`;
 export const linkList = (arr) => `<ul class="srcs">${arr.map(([t, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ${icon('ext', 13)}</a></li>`).join('')}</ul>`;

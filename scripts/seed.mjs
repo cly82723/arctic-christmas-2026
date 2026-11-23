@@ -10,7 +10,10 @@ import * as G from '../content/guides.mjs';
 export function buildContent() {
   let routes = { matrix: {}, legs: {} };
   try { routes = JSON.parse(readFileSync(new URL('../.dev/routes.json', import.meta.url), 'utf8')); } catch { /* run npm run routes */ }
+  let photos = {};
+  try { photos = JSON.parse(readFileSync(new URL('../.dev/photos.json', import.meta.url), 'utf8')); } catch { /* run node scripts/photos.mjs */ }
   return {
+    photos,
     spots: SPOTS,
     days: { days: DAYS, light: LIGHT, trip: TRIP, travellers: TRAVELLERS },
     routes,

@@ -29,7 +29,7 @@ button,select,input{font:inherit;color:inherit}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;height:var(--tab);padding:6px max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px));display:flex;justify-content:space-around;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
 .tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.7rem;color:var(--muted);text-decoration:none;border-radius:12px}
 .tabbar a.on{color:var(--blue);font-weight:600}
-.sheet-bg{position:fixed;inset:0;z-index:100;background:rgba(5,12,18,.55);display:flex;align-items:flex-end;justify-content:center}
+.sheet-bg{position:fixed;inset:0;z-index:2000;background:rgba(5,12,18,.55);display:flex;align-items:flex-end;justify-content:center}
 .sheet{width:100%;max-width:520px;background:var(--surface);border-radius:20px 20px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom,0px) + 22px)}
 .who{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
 
@@ -156,7 +156,7 @@ a,button,select,.row,.dchip,.daycard,.tick,.chip,.ev{touch-action:manipulation}
 .card .row{border:0;background:transparent;padding:10px 0;border-radius:0;box-shadow:none}
 .card .list.flat{gap:0}.card .row+.row{border-top:1px solid var(--line)}
 .daymore{margin:20px 0}.daymore>summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
-.mapbox{position:relative}
+.mapbox{position:relative;z-index:0;isolation:isolate}
 .maplock{position:absolute;left:10px;bottom:10px;z-index:500;box-shadow:0 4px 12px rgba(0,0,0,.25)}
 .nw{white-space:nowrap}
 ::selection{background:color-mix(in srgb,var(--blue) 28%,transparent)}
@@ -167,6 +167,15 @@ body{font-variant-numeric:tabular-nums}
 .leaflet-control-attribution{font-size:11px!important}
 .lead{margin:.3rem 0 1rem}
 .maptools{flex-wrap:wrap}.maptools .btn,.maptools .sw{white-space:nowrap}
+/* photo sheet: one swipeable strip, credited, loaded only when opened */
+.sheet.photos{max-width:600px;padding-left:0;padding-right:0}
+.ph-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 20px}
+.ph-strip{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:14px 20px 4px;scrollbar-width:none}
+.ph-strip::-webkit-scrollbar{display:none}
+.ph-strip figure{flex:0 0 86%;margin:0;scroll-snap-align:center}
+.ph-strip img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;border-radius:14px;background:var(--soft)}
+.ph-strip figcaption{font-size:.8rem;color:var(--muted);margin-top:6px;overflow-wrap:anywhere}
+.ph-note{font-size:.85rem;color:var(--muted);padding:0 20px;margin:10px 0 0}
 @media (min-width:960px){
   #view:has(.day-page){max-width:1120px}
   .daygrid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:24px;align-items:start}
